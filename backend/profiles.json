@@ -1,0 +1,39 @@
+{
+  "aigate": {
+    "allowSelfSigned": true,
+    "apiToken": "sk-JMbOUsgmaSzeYb05u0IEWdb1fMlY65ke8ZzWE7iMR04",
+    "baseUrl": "https://10.0.1.215",
+    "error": "",
+    "events": [],
+    "label": "FortiAIGate Secured",
+    "maxTokens": 1024,
+    "metrics": null,
+    "model": "FortiLab-Qwen",
+    "output": "",
+    "request": null,
+    "responseHeaders": null,
+    "saveToken": true,
+    "scenario": "outputDLP",
+    "secured": true,
+    "status": "idle",
+    "stream": true,
+    "temperature": 0.7
+  },
+  "raw": {
+    "apiToken": "",
+    "baseUrl": "http://10.0.1.53:8000",
+    "error": "",
+    "events": [],
+    "label": "RAW MODEL",
+    "maxTokens": 1024,
+    "metrics": null,
+    "model": "FortiLab-Qwen",
+    "output": "",
+    "request": null,
+    "responseHeaders": null,
+    "saveToken": false,
+    "status": "idle",
+    "stream": true,
+    "temperature": 0.7
+  }
+}

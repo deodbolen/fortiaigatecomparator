@@ -1,0 +1,42 @@
+{
+  "name": "Legacy Profile",
+  "profile": {
+    "aigate": {
+      "allowSelfSigned": true,
+      "apiToken": "sk-JMbOUsgmaSzeYb05u0IEWdb1fMlY65ke8ZzWE7iMR04",
+      "baseUrl": "https://10.0.1.215",
+      "error": "",
+      "events": [],
+      "label": "FortiAIGate Secured",
+      "maxTokens": 1024,
+      "metrics": null,
+      "model": "llama3:8b",
+      "output": "",
+      "request": null,
+      "responseHeaders": null,
+      "saveToken": true,
+      "secured": true,
+      "status": "idle",
+      "stream": true,
+      "temperature": 0.7
+    },
+    "raw": {
+      "apiToken": "",
+      "baseUrl": "http://10.0.1.53:80000",
+      "error": "",
+      "events": [],
+      "label": "RAW MODEL",
+      "maxTokens": 1024,
+      "metrics": null,
+      "model": "FortiLab-Qwen",
+      "output": "",
+      "request": null,
+      "responseHeaders": null,
+      "saveToken": false,
+      "status": "idle",
+      "stream": true,
+      "temperature": 0.7
+    }
+  },
+  "updated_at": "2026-06-29T18:48:15.982"
+}

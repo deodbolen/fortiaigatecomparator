@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/profiles.json:/app/profiles.json
+      - ./backend/profiles:/app/profiles
+      - ./backend/prompts:/app/prompts
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - CORS_ORIGINS=*
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "0.0.0.0:5173:80"
+    depends_on:
+      - backend
