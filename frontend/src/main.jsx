@@ -701,9 +701,9 @@ function App() {
         </div>
         <div className="headerTools">
           <div className="modeToggle viewModeToggle" role="group" aria-label="View mode">
+            <button className={mode === 'ui' ? 'active' : ''} onClick={() => setMode('ui')}>UI</button>
             <button className={mode === 'demo' ? 'active' : ''} onClick={() => setMode('demo')}>Demo</button>
             <button className={mode === 'analytic' ? 'active' : ''} onClick={() => setMode('analytic')}>Analytic</button>
-            <button className={mode === 'ui' ? 'active' : ''} onClick={() => setMode('ui')}>UI</button>
           </div>
           <div className="banner"><AlertTriangle size={18} /> Local debug tool only. Do not expose to the internet.</div>
         </div>
