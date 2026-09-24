@@ -9,7 +9,8 @@ The app is built for interference analysis, not benchmarking. It exposes outboun
 - Two-panel comparator: `RAW MODEL` and `FortiAIGate Secured`
 - Shared prompt with send-to-raw, send-to-FortiAIGate, and send-to-both controls
 - `Send to Both` runs RAW first, then FortiAIGate after RAW finishes
-- Demo/Analytic mode toggle; Demo hides configuration, JSON logs, metrics, and diffs
+- Demo/Analytic/UI mode toggle; Demo hides configuration, JSON logs, metrics, and diffs
+- UI mode provides a chat composer, saved prompt selection, and a Raw/FortiAIGate switch with separate conversation histories
 - OpenAI-compatible request shape: `POST {base_url}/v1/chat/completions`
 - Server-Sent Events from the FastAPI proxy to the browser
 - Streaming and non-streaming upstream support
@@ -83,6 +84,12 @@ http://<server-ip-or-hostname>:5173
 ```
 
 The Vite dev server is configured with `host: 0.0.0.0` and proxies `/api` to `VITE_DEV_API_TARGET`, defaulting to `http://localhost:8000`.
+
+## Chat UI Mode
+
+Configure the targets or load a profile in Analytic mode, then select UI beside Demo and Analytic. Switch between Raw and FortiAIGate to chat with either target. Each target keeps its own conversation history while switching modes; follow-up requests include that history. New chat clears the selected conversation. Conversations are kept in memory and reset on page reload.
+
+Select a saved prompt to fill the composer, edit it if needed, and send. The selected prompt’s system prompt and scenario are used for requests; without a saved prompt selected, the current Analytic system prompt and scenario are used. Press Enter to send or Shift+Enter for a new line.
 
 ## Profiles And Prompts
 

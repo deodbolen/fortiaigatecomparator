@@ -24,12 +24,12 @@ const emptyTarget = (label, defaultUrl) => ({
   error: '',
 });
 
-function buildPayload(panel, prompt, systemPrompt) {
+function buildPayload(panel, prompt, systemPrompt, history = []) {
   const messages = [];
   if (systemPrompt.trim()) {
     messages.push({ role: 'system', content: systemPrompt });
   }
-  messages.push({ role: 'user', content: prompt });
+  messages.push(...history, { role: 'user', content: prompt });
 
   return {
     model: panel.model,
@@ -135,8 +135,8 @@ function analyzeRequests(raw, fortiAIGate) {
   return findings;
 }
 
-async function streamPanel(panel, prompt, systemPrompt, scenarioValue, setPanel) {
-  const payload = buildPayload(panel, prompt, systemPrompt);
+async function streamPanel(panel, prompt, systemPrompt, scenarioValue, setPanel, history = []) {
+  const payload = buildPayload(panel, prompt, systemPrompt, history);
   const scenario = (scenarioValue || '').trim();
   const body = {
     base_url: panel.baseUrl,
@@ -163,6 +163,7 @@ async function streamPanel(panel, prompt, systemPrompt, scenarioValue, setPanel)
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    if (!response.ok) throw new Error(`Request failed (${response.status}): ${await response.text()}`);
     if (!response.body) throw new Error('Browser did not expose a response stream.');
 
     const reader = response.body.getReader();
@@ -346,6 +347,100 @@ function DiffTable({ rows }) {
         </React.Fragment>
       ))}
     </div>
+  );
+}
+
+function ChatUI({ active, raw, aigate, savedPrompts, systemPrompt, scenario }) {
+  const [target, setTarget] = useState('raw');
+  const [draft, setDraft] = useState('');
+  const [selectedPrompt, setSelectedPrompt] = useState('');
+  const [chats, setChats] = useState({ raw: { messages: [], run: {} }, aigate: { messages: [], run: {} } });
+  const busy = useRef({ raw: false, aigate: false });
+  const bottomRef = useRef(null);
+  const composerRef = useRef(null);
+  const chat = chats[target];
+  const panel = target === 'raw' ? raw : aigate;
+  const running = chat.run.status === 'running';
+  const configured = Boolean(panel.baseUrl?.trim() && panel.model?.trim());
+
+  useEffect(() => {
+    if (active) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [active, target, chat.messages]);
+
+  const send = async (event) => {
+    event.preventDefault();
+    if (!draft.trim() || busy.current[target] || !configured) return;
+    const currentTarget = target;
+    const text = draft.trim();
+    const preset = savedPrompts.find((item) => item.id === selectedPrompt);
+    const history = chat.messages.filter((message) => !message.error && message.content)
+      .map(({ role, content }) => ({ role, content }));
+    busy.current[currentTarget] = true;
+    setDraft('');
+    setChats((current) => ({ ...current, [currentTarget]: {
+      messages: [...current[currentTarget].messages, { role: 'user', content: text }, { role: 'assistant', content: '' }],
+      run: { status: 'running', output: '', events: [] },
+    } }));
+    await streamPanel(panel, text, preset ? preset.system_prompt || '' : systemPrompt,
+      preset ? preset.scenario || '' : scenario, (update) => {
+        setChats((current) => {
+          const previous = current[currentTarget];
+          const run = update(previous.run);
+          const messages = [...previous.messages];
+          messages[messages.length - 1] = { role: 'assistant', content: run.output || '', error: run.error || '' };
+          return { ...current, [currentTarget]: { messages, run } };
+        });
+      }, history);
+    busy.current[currentTarget] = false;
+    setChats((current) => ({ ...current, [currentTarget]: {
+      ...current[currentTarget], run: { ...current[currentTarget].run,
+        status: current[currentTarget].run.status === 'error' ? 'error' : 'done' },
+    } }));
+    composerRef.current?.focus();
+  };
+
+  return (
+    <section className="chatUI" hidden={!active} aria-label="Chat">
+      <div className="chatToolbar">
+        <div className="modeToggle chatTarget" role="group" aria-label="Chat target">
+          <button aria-pressed={target === 'raw'} className={target === 'raw' ? 'active' : ''} onClick={() => setTarget('raw')}>Raw</button>
+          <button aria-pressed={target === 'aigate'} className={target === 'aigate' ? 'active' : ''} onClick={() => setTarget('aigate')}><ShieldCheck size={16} /> FortiAIGate</button>
+        </div>
+        <button disabled={running || !chat.messages.length} onClick={() => setChats((current) => ({ ...current, [target]: { messages: [], run: {} } }))}><Eraser size={16} /> New chat</button>
+      </div>
+      <div className="chatMessages" role="log" aria-label={`${panel.label} conversation`} aria-live="polite">
+        {!chat.messages.length && <div className="chatWelcome"><h2>What would you like to ask?</h2><p>Chat with {target === 'raw' ? 'your raw model' : 'FortiAIGate'}, or start with a saved prompt.</p></div>}
+        {chat.messages.map((message, index) => (
+          <article key={index} className={`chatMessage ${message.role}`}>
+            <span className="chatRole">{message.role === 'user' ? 'You' : target === 'raw' ? 'Raw' : 'FortiAIGate'}</span>
+            <div className="chatBubble">{message.content || (running && index === chat.messages.length - 1 ? 'Thinking…' : message.error ? '' : 'No text returned.')}</div>
+            {message.error && <p className="chatError" role="alert">{message.error}</p>}
+          </article>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+      <form className="chatComposer" onSubmit={send}>
+        <select aria-label="Saved prompt" value={selectedPrompt} onChange={(event) => {
+          const id = event.target.value;
+          setSelectedPrompt(id);
+          const preset = savedPrompts.find((item) => item.id === id);
+          if (preset) setDraft(preset.prompt);
+        }}>
+          <option value="">Select a saved prompt (optional)</option>
+          {savedPrompts.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+        <div className="chatInputRow">
+          <textarea ref={composerRef} aria-label="Message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={`Message ${target === 'raw' ? 'Raw' : 'FortiAIGate'}…`} onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              event.currentTarget.form.requestSubmit();
+            }
+          }} />
+          <button type="submit" disabled={running || !draft.trim() || !configured}><Play size={16} /> Send</button>
+        </div>
+        <p className="chatHint">{!configured ? 'Load a profile or configure this target in Analytic mode to start chatting.' : 'Enter to send · Shift+Enter for a new line'}</p>
+      </form>
+    </section>
   );
 }
 
@@ -605,14 +700,18 @@ function App() {
           <p>Lab wiretap for request mutation, filtering, overlays, latency, and streaming behavior.</p>
         </div>
         <div className="headerTools">
-          <div className="modeToggle" role="group" aria-label="View mode">
+          <div className="modeToggle viewModeToggle" role="group" aria-label="View mode">
             <button className={mode === 'demo' ? 'active' : ''} onClick={() => setMode('demo')}>Demo</button>
             <button className={mode === 'analytic' ? 'active' : ''} onClick={() => setMode('analytic')}>Analytic</button>
+            <button className={mode === 'ui' ? 'active' : ''} onClick={() => setMode('ui')}>UI</button>
           </div>
           <div className="banner"><AlertTriangle size={18} /> Local debug tool only. Do not expose to the internet.</div>
         </div>
       </header>
 
+      <ChatUI active={mode === 'ui'} raw={raw} aigate={aigate} savedPrompts={savedPrompts} systemPrompt={systemPrompt} scenario={scenario} />
+
+      {mode !== 'ui' && <>
       <section className="shared">
         <div className="promptBox">
           <div className="promptTools">
@@ -675,6 +774,7 @@ function App() {
       </div>
 
       {mode === 'analytic' && <DiffView raw={raw} fortiAIGate={aigate} />}
+      </>}
     </main>
   );
 }
