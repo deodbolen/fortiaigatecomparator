@@ -413,7 +413,16 @@ function ChatUI({ active, raw, aigate, savedPrompts, systemPrompt, scenario }) {
         {chat.messages.map((message, index) => (
           <article key={index} className={`chatMessage ${message.role}`}>
             <span className="chatRole">{message.role === 'user' ? 'You' : target === 'raw' ? 'Raw' : 'FortiAIGate'}</span>
-            <div className="chatBubble">{message.content || (running && index === chat.messages.length - 1 ? 'Thinking…' : message.error ? '' : 'No text returned.')}</div>
+            {message.role === 'assistant' && !message.content && !message.error && running && index === chat.messages.length - 1 ? (
+              <div className="chatBubble thinking" role="status" aria-live="polite">
+                <span>Thinking</span>
+                <span className="dot dotOne" aria-hidden="true" />
+                <span className="dot dotTwo" aria-hidden="true" />
+                <span className="dot dotThree" aria-hidden="true" />
+              </div>
+            ) : (
+              <div className="chatBubble">{message.content || (message.error ? '' : 'No text returned.')}</div>
+            )}
             {message.error && <p className="chatError" role="alert">{message.error}</p>}
           </article>
         ))}
