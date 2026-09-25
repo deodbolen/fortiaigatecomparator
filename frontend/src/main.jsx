@@ -702,7 +702,7 @@ function App() {
   };
 
   return (
-    <main>
+    <main className={mode === 'ui' ? 'uiMode' : undefined}>
       <header>
         <div>
           <h1>FortiAIGate Raw Comparator</h1>

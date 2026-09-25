@@ -456,6 +456,11 @@ pre {
 .viewModeToggle { grid-template-columns: repeat(3, 1fr); }
 .chatUI { max-width: 940px; margin: 20px auto 0; }
 .chatUI[hidden] { display: none; }
+main.uiMode { height: 100dvh; display: flex; flex-direction: column; }
+.uiMode > header { flex-shrink: 0; }
+.uiMode .chatUI { width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 12px; }
+.uiMode .chatToolbar, .uiMode .chatComposer { flex-shrink: 0; }
+.uiMode .chatMessages { flex: 1; min-height: 0; height: auto; }
 .chatToolbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 .chatMessages { height: max(300px, calc(100dvh - 420px)); overflow-y: auto; padding: 24px 8px; }
 .chatWelcome { min-height: 260px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 12px; }
