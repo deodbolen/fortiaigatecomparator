@@ -471,7 +471,7 @@ pre {
 .chatComposer { border: 1px solid #3a4844; border-radius: 16px; background: #151a18; padding: 12px; }
 .chatComposer select { width: auto; max-width: 100%; }
 .chatInputRow { display: flex; align-items: flex-end; gap: 12px; margin-top: 10px; }
-.chatInputRow textarea { border: 0; background: transparent; min-height: 80px; max-height: 220px; }
+.chatInputRow textarea { border: 0; background: transparent; min-height: 160px; max-height: 440px; }
 .chatInputRow button { margin-bottom: 8px; }
 .chatHint { font-size: 12px; margin-top: 8px; }
 @media (max-width: 640px) {
